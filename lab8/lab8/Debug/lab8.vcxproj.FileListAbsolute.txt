@@ -1,0 +1,2 @@
+D:\Github Repos\Compilers\lab8\lab8\Debug\lab8.exe
+D:\Github Repos\Compilers\lab8\lab8\Debug\lab8.pdb

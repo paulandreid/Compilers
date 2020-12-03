@@ -1,0 +1,7 @@
+The program was tested (compiled) using Developer Command Prompt for VS2017.
+
+First the source code needs to be compiled using : "cl /c ExpressionParser.cpp". 
+
+Then the .obj filles need to be linked: "link ExpressionParser.obj" .
+
+This will result in an executable file which can be used to run the program using "ExpressionParser 1+2*4/2-2" for example.
