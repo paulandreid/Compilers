@@ -1,0 +1,5 @@
+﻿  lab10.cpp
+D:\Github Repos\Compilers\lab10\lab10.cpp(116,20): warning C4018: '<': signed/unsigned mismatch
+D:\Github Repos\Compilers\lab10\lab10.cpp(127): warning C4715: 'getAccessMod': not all control paths return a value
+D:\Github Repos\Compilers\lab10\lab10.cpp(139): warning C4715: 'getType': not all control paths return a value
+  lab10.vcxproj -> D:\Github Repos\Compilers\lab10\Debug\lab10.exe

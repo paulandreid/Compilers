@@ -1,0 +1,2 @@
+D:\Github Repos\Compilers\lab10\Debug\lab10.exe
+D:\Github Repos\Compilers\lab10\Debug\lab10.pdb
