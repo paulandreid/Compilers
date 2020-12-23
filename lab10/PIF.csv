@@ -61,10 +61,8 @@ I, 12, #, out, .global.Product.main
 P, 12, 60, ., .global.Product.main
 I, 12, #, println, .global.Product.main
 P, 12, 54, (, .global.Product.main
-S, 12, #, ", .global.Product.main
-I, 12, #, Products, .global.Product.main
-I, 12, #, below, .global.Product.main
-S, 12, #, ", .global.Product.main
+S, 12, #, "Products below ", .global.Product.main
+S, 12, #, "Products below , .global.Product.main
 O, 12, 80, +, .global.Product.main
 I, 12, #, pricelimit, .global.Product.main
 P, 12, 55, ), .global.Product.main
@@ -88,9 +86,8 @@ O, 14, 73, =, .global.Product.main
 K, 14, 8, new, .global.Product.main
 I, 14, #, Product, .global.Product.main
 P, 14, 54, (, .global.Product.main
-S, 14, #, ", .global.Product.main
-I, 14, #, potato, .global.Product.main
-S, 14, #, ", .global.Product.main
+S, 14, #, "potato", .global.Product.main
+S, 14, #, "potato, .global.Product.main
 P, 14, 61, ,, .global.Product.main
 N, 14, #, 5, .global.Product.main
 P, 14, 55, ), .global.Product.main
@@ -103,9 +100,8 @@ O, 15, 73, =, .global.Product.main
 K, 15, 8, new, .global.Product.main
 I, 15, #, Product, .global.Product.main
 P, 15, 54, (, .global.Product.main
-S, 15, #, ", .global.Product.main
-I, 15, #, wine, .global.Product.main
-S, 15, #, ", .global.Product.main
+S, 15, #, "wine", .global.Product.main
+S, 15, #, "wine, .global.Product.main
 P, 15, 61, ,, .global.Product.main
 N, 15, #, 47, .global.Product.main
 P, 15, 55, ), .global.Product.main
@@ -118,9 +114,8 @@ O, 16, 73, =, .global.Product.main
 K, 16, 8, new, .global.Product.main
 I, 16, #, Product, .global.Product.main
 P, 16, 54, (, .global.Product.main
-S, 16, #, ", .global.Product.main
-I, 16, #, honey, .global.Product.main
-S, 16, #, ", .global.Product.main
+S, 16, #, "honey", .global.Product.main
+S, 16, #, "honey, .global.Product.main
 P, 16, 61, ,, .global.Product.main
 N, 16, #, 22, .global.Product.main
 P, 16, 55, ), .global.Product.main

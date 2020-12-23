@@ -120,11 +120,11 @@ string writeCurrentScope() {
 }
 
 string getAccessMod() {
-	for (int i = tokens.size() - 1; i >= 0; i--) {
+	for (int i = tokens.size() - 1; i >= tokens.size()-3; i--) {
 		if (tokens[i]->token =="public" || tokens[i]->token == "private" || tokens[i]->token == "protected")
 			return tokens[i]->token;
 	}
-	return ""
+	return "--";
 }
 
 string getType() {
@@ -178,7 +178,9 @@ void finiteAutomata(string token, int line) {
 	}
 	else { //we have an identifier or literal
 		if (token[0] >= 48 && token[0] <= 57) { tokens.push_back(new Token("N",line,-1,token, writeCurrentScope())); } //state32, number literal
-		else if (token[0] == '"') { tokens.push_back(new Token("S",line,-1,token, writeCurrentScope())); }	//state33, string literal
+		else if (token[0] == '"') { 
+			tokens.push_back(new Token("S",line,-1,token, writeCurrentScope())); ST.push_back(new symbolTable(tokens[tokens.size() - 1], "literal", "String", line, "global"));
+		}	//state33, string literal
 		else if (token[0] != 32 && token.size() != 0 && token[0] != '\n') {
 
 			
@@ -193,6 +195,8 @@ void finiteAutomata(string token, int line) {
 				type = "long";
 			else if (tokens[tokens.size() - 1]->typeCode == "I")
 				type = tokens[tokens.size() - 1]->token;
+			else if (tokens[tokens.size() - 1]->token == "]" && tokens[tokens.size() - 2]->token == "[")
+				type=tokens[tokens.size() - 3]->token+"[]";
 			tokens.push_back(new Token("I",line,-1,token, writeCurrentScope()));  //state34, identifier
 			bool alreadyInserted = false;
 			for (symbolTable* symbol : ST){
@@ -280,11 +284,22 @@ int main(int argc, char* argv[])
 			}
 		}
 		//token
-		if (ch == ' ' || ch == '(' || ch == ')' || ch == ';'
+		if (ch == '\"') {
+			token.clear();
+			token += "\"";
+			while (fin >> noskipws >> ch && ch != '\"')
+				token += ch;
+			if (ch != '\"')
+				lexicalError(" missing \" ", line);
+			else
+				finiteAutomata(token + "\"", line);
+		}
+		else if (ch == ' ' || ch == '(' || ch == ')' || ch == ';'
 			|| ch == '\n' || ch == '\t' || ch == '<' || ch == '>'
-			|| ch == '#' || ch == '\"' || ch == '[' || ch == ']' || ch == '{'
+			|| ch == '#'  || ch == '[' || ch == ']' || ch == '{'
 			|| ch == '}' || ch == ',' || ch == '.' || ch == '+' || ch == '-') {	//marks the end of a string or the beginning of a Constant
 
+			
 			if (token != "") finiteAutomata(token, line);
 			if (ch != ' ' && ch != '\n') {// ' ' is a separator between tokens but will not be treated as one
 				string s;
