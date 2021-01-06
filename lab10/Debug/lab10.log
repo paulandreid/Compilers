@@ -1,5 +1,12 @@
 ﻿  lab10.cpp
-D:\Github Repos\Compilers\lab10\lab10.cpp(116,20): warning C4018: '<': signed/unsigned mismatch
-D:\Github Repos\Compilers\lab10\lab10.cpp(123,36): warning C4018: '>=': signed/unsigned mismatch
-D:\Github Repos\Compilers\lab10\lab10.cpp(140): warning C4715: 'getType': not all control paths return a value
+D:\Github Repos\Compilers\lab10\lab10.cpp(128,20): warning C4018: '<': signed/unsigned mismatch
+D:\Github Repos\Compilers\lab10\lab10.cpp(136,36): warning C4018: '>=': signed/unsigned mismatch
+D:\Github Repos\Compilers\lab10\lab10.cpp(156,26): warning C4018: '>': signed/unsigned mismatch
+D:\Github Repos\Compilers\lab10\lab10.cpp(153): warning C4715: 'getType': not all control paths return a value
+D:\Github Repos\Compilers\lab10\lab10.cpp(337): warning C4715: 'include': not all control paths return a value
+D:\Github Repos\Compilers\lab10\lab10.cpp(362): warning C4715: 'LP': not all control paths return a value
+D:\Github Repos\Compilers\lab10\lab10.cpp(370): warning C4715: 'RP': not all control paths return a value
+D:\Github Repos\Compilers\lab10\lab10.cpp(378): warning C4715: 'LCB': not all control paths return a value
+D:\Github Repos\Compilers\lab10\lab10.cpp(386): warning C4715: 'RCB': not all control paths return a value
+D:\Github Repos\Compilers\lab10\lab10.cpp(480): warning C4715: 'assigment': not all control paths return a value
   lab10.vcxproj -> D:\Github Repos\Compilers\lab10\Debug\lab10.exe

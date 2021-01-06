@@ -1,4 +1,4 @@
-//Product.java
+
 
 
 #include <iostream>
@@ -11,13 +11,7 @@
 #include <set>
 using namespace std;
 
-/*REGEX
-Identifiers:[a-zA-z][a-zA-Z0-9]
-Operators:==|!|&&|<|\+|\-|\*|\/
-Keywords:if|int|class|for|false|new|void|this|true|public|static|booleean|else
-String Literal:"[a-zA-Z0-9]*"
-Number Literal: ((0\.)?[1-9]+[0-9]*)|0
-*/
+
 
 
 class Token {
@@ -68,8 +62,12 @@ vector<string> scopes;
 map<string, int> state; //holding state representation
 vector<Token*> tokens;
 vector<symbolTable*> ST; //could not get a hash based array to work in VS2019, weird syntax errors
+int curentTokenPosition = -1;
+string token;
+int backtrack = 0;
 void newScope();
 void exitScope();
+bool statement();
 
 void init() { //populate our states
 	state.insert(std::pair<string, int>("if", 1));
@@ -83,7 +81,7 @@ void init() { //populate our states
 	state.insert(std::pair<string, int>("true", 9));
 	state.insert(std::pair<string, int>("public", 10));
 	state.insert(std::pair<string, int>("static", 11));
-	state.insert(std::pair<string, int>("booleean", 12));
+	state.insert(std::pair<string, int>("bool", 12));
 	state.insert(std::pair<string, int>("else", 13));
 	state.insert(std::pair<string, int>("=", 14));
 	state.insert(std::pair<string, int>("!", 15));
@@ -103,12 +101,26 @@ void init() { //populate our states
 	state.insert(std::pair<string, int>(",", 29));
 	state.insert(std::pair<string, int>(":", 30));
 	state.insert(std::pair<string, int>(";", 31));
+	state.insert(std::pair<string, int>("#include", 32));
+	state.insert(std::pair<string, int>(">", 33));
+	state.insert(std::pair<string, int>("double", 34));
+	state.insert(std::pair<string, int>("std::cout", 35));
+	state.insert(std::pair<string, int>("std::cin", 36));
+	state.insert(std::pair<string, int>("std::string", 37));
+	state.insert(std::pair<string, int>("return", 38));
+	state.insert(std::pair<string, int>("==", 39));
 
 	scopes.push_back("global");
 }
 
 void lexicalError(string token, int line) {
 	cout << "Lexical error at line " << line << "! " << token << " not alowed!";
+	exit(EXIT_FAILURE);
+}
+
+void syntaxError() {
+	cout << "Syntax error " << token << " on line " << tokens[curentTokenPosition]->lineNumber<<" not alowed!";
+	exit(EXIT_FAILURE);
 }
 
 string writeCurrentScope() {
@@ -120,6 +132,7 @@ string writeCurrentScope() {
 }
 
 string getAccessMod() {
+	if (tokens.size() < 4) return "--";
 	for (int i = tokens.size() - 1; i >= tokens.size()-3; i--) {
 		if (tokens[i]->token =="public" || tokens[i]->token == "private" || tokens[i]->token == "protected")
 			return tokens[i]->token;
@@ -139,6 +152,21 @@ string getType() {
 	 }
 }
 
+bool verify() {
+	if (!(tokens.size() - 1 > curentTokenPosition)) return false;
+	return true;
+}
+
+void nextToken() {
+	int tSize = tokens.size();
+	if (tSize - 1 > curentTokenPosition) {
+		curentTokenPosition++;
+		token = tokens[curentTokenPosition]->token;
+	}
+	else
+		return;
+}
+
 void finiteAutomata(string token, int line) {
 	if (state.count(token)) {//check the first 31 states for Keywords, Operators or Separators
 		switch (state.find(token)->second)
@@ -154,7 +182,7 @@ void finiteAutomata(string token, int line) {
 		case 9: tokens.push_back(new Token("K",line,1,"true", writeCurrentScope())); break;
 		case 10: tokens.push_back(new Token("K",line,3,"public", writeCurrentScope())); break;
 		case 11: tokens.push_back(new Token("K",line,4,"static", writeCurrentScope())); break;
-		case 12: tokens.push_back(new Token("K",line,91,"booleean", writeCurrentScope())); break;
+		case 12: tokens.push_back(new Token("K",line,91,"bool", writeCurrentScope())); break;
 		case 13: tokens.push_back(new Token("K",line,9,"else", writeCurrentScope())); break;
 		case 14: tokens.push_back(new Token("O",line,73,"=", writeCurrentScope())); break;
 		case 15: tokens.push_back(new Token("O",line,70,"!", writeCurrentScope())); break;
@@ -174,6 +202,14 @@ void finiteAutomata(string token, int line) {
 		case 29: tokens.push_back(new Token("P",line,61,",", writeCurrentScope())); break;
 		case 30: tokens.push_back(new Token("P",line,62,":", writeCurrentScope())); break;
 		case 31: tokens.push_back(new Token("P",line,63,";", writeCurrentScope())); break;
+		case 32: tokens.push_back(new Token("K", line, 5, "#include", writeCurrentScope())); break;
+		case 33: tokens.push_back(new Token("O", line, 72, ">", writeCurrentScope())); break;
+		case 34: tokens.push_back(new Token("K", line, 92, "double", writeCurrentScope())); break;
+		case 36: tokens.push_back(new Token("K", line, 92, "std::cin", writeCurrentScope())); break;
+		case 35: tokens.push_back(new Token("K", line, 92, "std::cout", writeCurrentScope())); break;
+		case 37: tokens.push_back(new Token("K", line, 92, "std::string", writeCurrentScope())); break;
+		case 38: tokens.push_back(new Token("K", line, 92, "return", writeCurrentScope())); break;
+		case 39: tokens.push_back(new Token("O", line, 80, "==", writeCurrentScope())); break;
 		}
 	}
 	else { //we have an identifier or literal
@@ -184,7 +220,7 @@ void finiteAutomata(string token, int line) {
 		else if (token[0] != 32 && token.size() != 0 && token[0] != '\n') {
 
 			
-			string type = "--";
+			string type = "--"; //determine the type of identifier
 			if (tokens[tokens.size() - 1]->token == "int")
 				type = "int";
 			else if (tokens[tokens.size() - 1]->token == "void")
@@ -196,8 +232,12 @@ void finiteAutomata(string token, int line) {
 			else if (tokens[tokens.size() - 1]->typeCode == "I")
 				type = tokens[tokens.size() - 1]->token;
 			else if (tokens[tokens.size() - 1]->token == "]" && tokens[tokens.size() - 2]->token == "[")
-				type=tokens[tokens.size() - 3]->token+"[]";
+				type = tokens[tokens.size() - 3]->token + "[]";
+			else
+				type = tokens[tokens.size() - 1]->token; //type of user defined type
+
 			tokens.push_back(new Token("I",line,-1,token, writeCurrentScope()));  //state34, identifier
+
 			bool alreadyInserted = false;
 			for (symbolTable* symbol : ST){
 				if (symbol->token->token == tokens[tokens.size() - 1]->token && symbol->token->scope == tokens[tokens.size() - 1]->scope) {
@@ -207,7 +247,7 @@ void finiteAutomata(string token, int line) {
 			}
 			if(!alreadyInserted)
 				if(tokens[tokens.size()-2]->token=="class")	
-					ST.push_back(new symbolTable(tokens[tokens.size() - 1], "class", type, line, getAccessMod()));
+					ST.push_back(new symbolTable(tokens[tokens.size() - 1], "class", "--", line, getAccessMod()));
 				else if(token[0]=='"')
 					ST.push_back(new symbolTable(tokens[tokens.size() - 1], "literal", type, line, getAccessMod()));
 				else
@@ -256,6 +296,394 @@ void writeSymbolTable() { //symbol table output to file
 	myfile.close();
 }
 
+
+//IDENTIFIER = LETTER{ LETTER | DIGIT | “_”} .
+bool identifier() {
+	int ch = 0;
+	if ((token[0] >= 'a' && token[0] <= 'z') || (token[0] >= 'A' && token[0] <= 'Z') || token[0]=='*') {
+		for (char ch : token)
+			if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= 0 && ch <= 9) ||(ch=='*' && ch==token[0])))
+				return false;
+	}
+	//else if(token[0]>='0' &&token[0]<='9') lexicalError(token, tokens[curentTokenPosition]->lineNumber);
+		
+	return true;
+}
+
+//INCLUDE = “#include”, (“<”, IDENTIFIER , “>” , “;”) | ( “ “ “, IDENTIFIER, “ “ “, “; ”) .
+bool include() {
+	nextToken();
+	if (token == "#include")
+	{
+		nextToken();
+		if (token == "<"){
+			nextToken();
+			if (!identifier())
+				return false;
+			nextToken();
+			if (token != ">")
+				return false;
+			
+			return true;
+		}
+		else if (token[0] == '\"' && token[token.size()-1]=='\"' && token[token.size() - 2]=='h' && token[token.size() - 3]=='.') {
+			token=token.substr(1, token.size() - 4);
+			if (identifier())
+				return true;
+			
+			lexicalError(token, tokens[curentTokenPosition]->lineNumber);
+		}
+	}
+}
+
+//NUMBER = {DIGIT};
+bool number() {
+	for (char ch : token)
+		if (!(ch >= '0' && ch <= '9'))
+			return false;
+	return true;
+}
+
+//TYPE = “int” | “bool” | “std::string” | “double” | “float” .
+bool type() {
+	nextToken();
+	if (token == "int" || token == "bool" || token == "std::string" || token == "double" || token == "float")
+		return true;
+
+	return false;
+}
+
+//LP="(".
+bool LP() {
+	nextToken();
+	if (token == "(")
+		return true;
+	syntaxError();
+}
+
+//RP=")".
+bool RP() {
+	nextToken();
+	if (token == ")")
+		return true;
+	syntaxError();
+}
+
+//LCB="{".
+bool LCB() {
+	nextToken();
+	if (token == "{")
+		return true;
+	syntaxError();
+}
+
+//RCB="}".
+bool RCB() {
+	nextToken();
+	if (token == "}")
+		return true;
+	syntaxError();
+}
+
+//USERTYPE = IDENTIFIER. 
+bool userType() {
+	return identifier();
+}
+
+//ARRAYIDENTIFIER = IDENTIFIER.
+bool arrayIdentifier() {
+	return identifier();
+}
+
+// TYPE | USERTYPE, ARRAYIDENTIFIER, “[“, NONZERONUMBER,{NUMBER}, “]”, “; ” .
+bool aray() {
+	if (!(type() || userType()))
+		return false;
+	nextToken();
+	if (!arrayIdentifier())
+		return false;
+	nextToken();
+	if (token != "[")
+		return false;
+	nextToken();
+	number();
+	nextToken();
+	if (token != "]")
+		return false;
+	nextToken();
+	if (token != ";")
+		return false;
+	
+	return true;
+}
+
+//(TYPE | USERTYPE, IDENTIFIER) | ARRAY, “;” . 
+bool variableDeclaration() {
+	backtrack = curentTokenPosition;
+
+	if (aray()) return true;
+
+	curentTokenPosition = backtrack;
+	if (type() || userType()) {
+		nextToken();
+		identifier();
+	}
+	else {
+		aray();
+	}
+	nextToken();
+	if (token == ";")
+		return true;
+
+	return false;
+}
+
+//VARIABLE = IDENTIFIER.
+bool variable() {
+	return identifier();
+}
+
+// IDENTIFIER, “=”, ( “new”, USERTYPE | TYPE) | VARIABLE | NUMBER, “; ” .
+bool assigment() {
+	nextToken();
+	identifier();
+	nextToken();
+	if (token != "=") return false;
+	nextToken();
+	if (token == "new")
+		if (type() || userType())
+		{
+			nextToken();
+			return token == ";";
+		}
+		else
+			return false;
+	else if (variable())
+	{
+		nextToken();
+		if (token == ";") return true;
+		if (token == "+") {
+			nextToken();
+			if (identifier()) {
+				nextToken();
+				if (token == ";") return true;
+			}
+		}
+	}
+	else if (number())
+	{
+		nextToken();
+		return token == ";";
+	}
+	else
+		return false;
+}
+
+//POSTINCREMENT = IDENTIFIER, “++” | “--“.
+bool postincrement() {
+	nextToken();
+	if (identifier())
+	{
+		nextToken();
+		if (token == "+")
+		{
+			nextToken();
+			if (token == "+")
+				return true;
+		}
+		else if (token == "-")
+		{
+			nextToken();
+			if (token == "-")
+				return true;
+		}
+	}
+	return false;
+}
+
+//PREINCREMENT = "++" | "--", IDENTIFIER.
+bool preincrement() {
+	nextToken();
+	if (token == "++" || token == "--")
+	{
+		nextToken();
+		if (identifier())
+			return true;
+	}
+	return false;
+}
+
+//ARITHMETICASSIGMENT = POSTINCREMENT | PREINCREMENT | ([“ + ” | “ - “], IDENTIFIER, { “ + ” | “ - “ | “ * ” | “ / ” , IDENTIFIER }, “; ” .
+bool arithmeticAssigment() {
+	backtrack = curentTokenPosition;
+	if (postincrement()) { nextToken(); return token == ";"; }
+	curentTokenPosition = backtrack;
+	if (preincrement()) { nextToken(); return token == ";"; }
+	curentTokenPosition = backtrack;
+	nextToken();
+	if (token == "+" || token == "-") {
+		nextToken();
+		if (identifier())
+		{
+			nextToken();
+			if (token == "+" || token == "-" || token == "*" || token == "/")
+			{
+				nextToken();
+				if (identifier())
+					return true;
+			}
+		}
+
+	}
+	return false;
+}
+
+//CONDITION = IDENTIFIER | NUMBER, ("="|"<"|"<="|">"|">=" | “ != ”), IDENTIFIER | NUMBER | “true” | “false” .
+bool condition() {
+	nextToken();
+	if (identifier())
+	{
+		nextToken();
+		if (token == "==" || token == ">" || token == "<" || token == "!=" || token == ">=" || token == "<=") {
+			nextToken();
+			if (token == "true" || token == "false" || identifier() || number())
+				return true;
+		}
+	}
+	return false;
+}
+
+//LOOP = “while”, LP, (“true” | “false”) | ( CONDITION, {AND | OR, CONDITION}, RP, LCB, STATEMENT, { STATEMENT }, RCB.
+bool loop() {
+	nextToken();
+	if (token == "while") {
+		LP();
+		nextToken();
+		if (token == "true" || token == "false") {
+			RP();
+			LCB();
+			while (statement()) {}
+			RCB();
+			return true;
+		}
+		else if (condition()) {
+			RP();
+			LCB();
+			while (statement()) {}
+			RCB();
+			return true;
+		}
+	}
+	return false;
+}
+
+//IF = “if” , LP , CONDITION, [AND | OR] {CONDITION}, RP , STATEMENT | (LCB, STATEMENT, { STATEMENT }, RCB) [(“else”, STATEMENT) | “elseif”, LP, CONDITION, [AND | OR] { CONDITION }, RP, LCB, { STATEMENT }, RCB .
+bool ifStatement() {
+	nextToken();
+	if (token != "if") return false;
+	LP();
+	condition();
+	RP();
+	LCB();
+	while (statement()) {}
+	RCB();
+	nextToken();
+	if (token == "else") {
+		return statement();
+	}
+	return true;
+}
+
+//BREAK = “break”, “;” . 
+bool breakStatement() {
+	nextToken();
+	if (token == "break") {
+		nextToken();
+		return token == ";";
+	}
+	return false;
+}
+
+//INPUT = “std::cin>>”, IDENTIFER, “;” . 
+bool input() {
+	nextToken();
+	if (token != "std::cin") return false;
+	nextToken();
+	if (token != ">") syntaxError();
+	nextToken();
+	if (token != ">") syntaxError();
+	nextToken();
+	identifier();
+	nextToken();
+	return token == ";";
+}
+
+//OUTPUT = “std::cout<<”, IDENTIFIER | NUMBER | (“”” , {ASCII CODE}, “””), “; ” .
+bool output() {
+	nextToken();
+	if (token != "std::cout") return false;
+	nextToken();
+	if (token != "<") syntaxError();
+	nextToken();
+	if (token != "<") syntaxError();
+	nextToken();
+	identifier();
+	nextToken();
+	nextToken();
+	return token == ";";
+}
+
+//STATEMENT = VARIABLEDECLARATION | ASSIGMENT | ARITHMETICASSIGMENT | BREAK | LOOP | OUTPUT | INPUT | IF.
+bool statement() {
+	backtrack = curentTokenPosition;
+	
+	if (assigment()) return true;
+	curentTokenPosition = backtrack;
+	if(arithmeticAssigment()) return true;
+	curentTokenPosition = backtrack;
+	if (loop()) return true;
+	curentTokenPosition = backtrack;
+	if (ifStatement()) return true;
+	curentTokenPosition = backtrack;
+	if (breakStatement()) return true;
+	curentTokenPosition = backtrack;
+	if (input()) return true;
+	curentTokenPosition = backtrack;
+	if (output()) return true;
+	curentTokenPosition = backtrack;
+	if (variableDeclaration()) return true;
+	curentTokenPosition = backtrack;
+
+
+	return false;
+	
+}
+
+//{INCLUDE}, TYPE, “main”, LP , {IDENTIFIER}, RP, LCB, {STATEMENT} .
+bool program() {
+	
+	
+	while (include()) {}
+	type();
+	nextToken();
+	if (token != "main") syntaxError();
+	LP();
+	RP();
+	LCB();
+	if(tokens[curentTokenPosition]->token!="return")  while(statement()){}
+	return true;
+}
+
+//Start of Parser
+void LL1() {
+	curentTokenPosition = 0; //marks the curent token position in tokens[]
+	token = tokens[0]->token;
+	program();
+
+	writeSymbolTable();
+
+}
+
 int main(int argc, char* argv[])
 {
 
@@ -296,12 +724,12 @@ int main(int argc, char* argv[])
 		}
 		else if (ch == ' ' || ch == '(' || ch == ')' || ch == ';'
 			|| ch == '\n' || ch == '\t' || ch == '<' || ch == '>'
-			|| ch == '#'  || ch == '[' || ch == ']' || ch == '{'
+		  || ch == '[' || ch == ']' || ch == '{'
 			|| ch == '}' || ch == ',' || ch == '.' || ch == '+' || ch == '-') {	//marks the end of a string or the beginning of a Constant
 
-			
+			//if (ch == '<' && tokens[tokens.size() - 1]->token == "#include") continue;
 			if (token != "") finiteAutomata(token, line);
-			if (ch != ' ' && ch != '\n') {// ' ' is a separator between tokens but will not be treated as one
+			if (ch != ' ' && ch != '\n' && ch!='\t' ) {// ' ' is a separator between tokens but will not be treated as one
 				string s;
 				s.append(1, ch); //checking with finiteAutomata() the char(separator) that ended a token and also the token (one of Identifier/Keyword/Literal)
 				finiteAutomata(s, line);
@@ -316,6 +744,8 @@ int main(int argc, char* argv[])
 
 	}
 
+
+	program();
 	writeCSV();
 	writeSymbolTable();
 

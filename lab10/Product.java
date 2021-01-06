@@ -1,5 +1,5 @@
 public class Product {
-    String name;
+    String 2name;
     int cost;
 
     public Product(String name, int cost) {
@@ -11,7 +11,8 @@ public class Product {
         int pricelimit = Integer.parseInt(args[0]);
         System.out.println("Products below " + pricelimit);
         Product[] prodlist = new Product[3];
-        prodlist[0] = new Product("potato", 5);
+	//LEXICAL ERROR, missing " at end of literal string
+        prodlist[0] = new Product("potato, 5);
         prodlist[1] = new Product("wine", 47);
         prodlist[2] = new Product("honey", 22);
         for (Product prod : prodlist) {
